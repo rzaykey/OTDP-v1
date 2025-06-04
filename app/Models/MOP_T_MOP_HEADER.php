@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class MOP_T_MOP_HEADER extends Model
+{
+    use HasFactory;
+    protected $connection = 'MSADMIN';
+    protected $table = "MOP_T_MOP_HEADER";
+    protected $fillable = [
+        'ID','JDE_NO','EMPLOYEE_NAME','EQUIPMENT_TYPE1','EQUIPMENT_TYPE2',
+        'EQUIPMENT_TYPE3','EQUIPMENT_TYPE4','EQUIPMENT_TYPE5','EQUIPMENT_TYPE6','INPUT_DATE',
+        'MONTH','YEAR','A_ATTENDANCE_RATIO','B_DISCIPLINE','C_SAFETY_AWARENESS',
+        'D_WH_WASTE_EQUIPTYPE1','D_WH_WASTE_EQUIPTYPE2','D_WH_WASTE_EQUIPTYPE3',
+        'D_WH_WASTE_EQUIPTYPE4','D_WH_WASTE_EQUIPTYPE5','D_WH_WASTE_EQUIPTYPE6',
+        'E_PTY_EQUIPTYPE1','E_PTY_EQUIPTYPE2','E_PTY_EQUIPTYPE3',
+        'E_PTY_EQUIPTYPE4','E_PTY_EQUIPTYPE5','E_PTY_EQUIPTYPE6',
+        'POINT_ELIGIBILITAS','POINT_PRODUKSI','TOTAL_POINT','MOP_BULANAN_GRADE',
+        'CREATED_BY','CREATED_AT','UPDATED_BY','UPDATED_AT','SITE','MOP_TYPE','TARGET_AVG_HM',
+        'POINT_A','POINT_B','POINT_C','POINT_D','POINT_E'
+    ];
+}
