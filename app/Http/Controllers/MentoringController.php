@@ -445,7 +445,6 @@ class MentoringController extends Controller
     public function apiMentoringCreate(Request $request)
     {
         // Jika ada parameter tipe mentoring, bisa filter indikator
-
         $siteList = MASTER_SITE::all(); // ✅ ambil semua site
         $typeMentoring = $request->query('type_mentoring');
 
@@ -454,7 +453,6 @@ class MentoringController extends Controller
             $query->where('TYPE', $typeMentoring);
         }
         $data = $query->get()->groupBy('indicator_type');
-
         // Siapkan points default (bisa kosong karena ini baru create)
         $points = [];
         foreach ($data as $section => $indicators) {
