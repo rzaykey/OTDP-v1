@@ -7,6 +7,7 @@ use App\Http\Controllers\MentoringController;
 use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\MOPController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ApiMobileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,10 +27,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::put('/mentoring/{id}/update', [MentoringController::class, 'apiMentoringUpdate']);
-    Route::delete('/mentoring/{id}/delete', [MentoringController::class, 'apiMentorDelete']);
-    Route::post('/mentoring/store', [MentoringController::class, 'apiMentoringStore']);
-    // Route::get('/mentoring/{id}/edit', [MentoringController::class, 'apiMentoringEdit']);
+    Route::put('/mentoring/{id}/update', [ApiMobileController::class, 'apiMentoringUpdate']);
+    Route::delete('/mentoring/{id}/delete', [ApiMobileController::class, 'apiMentorDelete']);
+    Route::post('/mentoring/store', [ApiMobileController::class, 'apiMentoringStore']);
+    Route::post('/dayActivities', [ApiMobileController::class, 'apiDayActStore']);
+    Route::delete('/dayActivities/{id}', [ApiMobileController::class, 'apiDayActDelete']);
+    Route::get('/dayActivities/createDailyAct', [ApiMobileController::class, 'apiDayActCreate']);
     // Tambahkan endpoint lain yang butuh login di sini
 });
 // Route::middleware('auth')->group(function () {
@@ -50,14 +53,15 @@ Route::get('/mop-data', [MOPController::class, 'MOPData'])->name('MOPData');
 Route::get('/mop-dataSimple', [MOPController::class, 'MOPDataSimple'])->name('MOPDataSimple');
 Route::get('/mop-dataCompile', [MOPController::class, 'MOPDataCompile'])->name('MOPDataCompile');
 
-Route::get('/mentoring-data', [MentoringController::class, 'MentoringData'])->name('MentoringData');
 Route::get('/mentoringdashboard-table', [MentoringController::class, 'MentoringDashboard_Table'])->name('MentoringDashboard_Table');
 Route::get('/mentoring-dataDB', [MentoringController::class, 'MentoringDataDB'])->name('MentoringDataDB');
-Route::get('/mentoring/{id}/edit', [MentoringController::class, 'apiMentoringEdit']);
-Route::get('/mentoring/createData', [MentoringController::class, 'apiMentoringCreate']);
-// Route::put('/mentoring/{id}/update', [MentoringController::class, 'apiMentoringUpdate']);
-
 
 Route::get('/dayact-data', [TrainerController::class, 'DayActData'])->name('DayActData');
 Route::get('/trainhour-data', [TrainerController::class, 'HMTrainData'])->name('HMTrainData');
+
+// Route API mobile
+Route::get('/mentoring-data', [ApiMobileController::class, 'MentoringData'])->name('MentoringData');
+Route::get('/mentoring/{id}/edit', [ApiMobileController::class, 'apiMentoringEdit']);
+Route::get('/mentoring/createData', [ApiMobileController::class, 'apiMentoringCreate']);
+Route::get('/dayActivities', [ApiMobileController::class, 'apiDayActIndex']);
 // });
