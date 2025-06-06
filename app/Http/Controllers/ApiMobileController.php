@@ -28,6 +28,28 @@ use App\Imports\HMTrainImport;
 
 class ApiMobileController extends Controller
 {
+    public function apiModelUnit(Request $request)
+    {
+        try {
+            $query = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
+                ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
+                ->select('a.id', 'a.model', 'a.FID_TYPE as type', 'b.class')
+                ->orderBy('b.class');
+
+
+            $models = $query->orderBy('b.class')->get();
+
+            if ($models->isEmpty()) {
+                return response()->json([]);
+            }
+
+            return response()->json($models);
+        } catch (\Exception $e) {
+            Log::error('Error in MOP_M_MODEL_UNIT API: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function MentoringData(Request $request)
     {
 
@@ -563,8 +585,72 @@ class ApiMobileController extends Controller
             ], 500);
         }
     }
+    public function apiDayActEdit($id)
+
+    {
+        try {
+
+            $dayact = MOP_T_TRAINER_DAILY_ACTIVITY::where('ID', $id)
+                ->first();;
+
+            if (!$dayact) {
+                return response()->json(['data' => null], 404);
+            }
+
+            return response()->json(['data' => $dayact]);
+        } catch (\Exception $e) {
+            \Log::error('Error in apiDayActIndex: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function apiDayActUpdate(Request $request)
+    {
+        Log::info('Request to apiDayActUpdate:', $request->all());
+
+        $data = MOP_T_TRAINER_DAILY_ACTIVITY::find($request->input('edit_id'));
+
+        if (!$data) {
+            Log::warning('Data not found with ID: ' . $request->input('edit_id'));
+            return response()->json(['error' => 'Data not found'], 404);
+        }
+
+        $updateData = [
+            'JDE_NO' => $request->input('edit_jde'),
+            'EMPLOYEE_NAME' => $request->input('edit_name'),
+            'SITE' => $request->input('edit_site'),
+            'DATE_ACTIVITY' => $request->input('edit_date'),
+            'KPI_TYPE' => $request->input('edit_kpi'),
+            'ACTIVITY' => $request->input('edit_activity'),
+            'UNIT_DETAIL' => $request->input('edit_unit_detail'),
+            'TOTAL_PARTICIPANT' => $request->input('edit_jml_peserta'),
+            'TOTAL_HOUR' => $request->input('edit_total_hour'),
+            'UPDATED_BY' => Auth::user()->username,
+        ];
+
+        Log::info('Update data payload:', $updateData);
+
+        try {
+            $data->update($updateData);
+            Log::info('Update successful for ID: ' . $request->input('edit_id'));
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update data'], 500);
+        }
+    }
+
+
+
     public function apiDayActDelete($id)
     {
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Please login first'
+            ], 401);
+        }
+
         try {
             $record = MOP_T_TRAINER_DAILY_ACTIVITY::findOrFail($id);
             $record->delete();
