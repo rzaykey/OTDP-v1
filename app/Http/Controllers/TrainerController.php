@@ -51,7 +51,7 @@ class TrainerController extends Controller
 
     public function DayActCreate()
     {
-            //  return Auth::user();
+        //  return Auth::user();
         $employeeAuth = PROINT_EMPLOYEE::where('EmployeeId', Auth::user()->username)->first();
         // return $employeeAuth;
         return view('pages.trainer.dayactcreate', ['employeeAuth' => $employeeAuth]);
@@ -198,8 +198,10 @@ class TrainerController extends Controller
 
         $typeUnit = MOP_M_TYPE_UNIT::select('class')->distinct()->orderby('class')->get();
         $classUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
-                ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.TYPE', '=', 'b.TYPE')
-                ->select('a.id', 'a.model', 'a.type', 'b.class')->get();
+            ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.TYPE')
+            ->select('a.id', 'a.model', 'a.FID_TYPE as type', 'b.class')
+            ->get();
+
         $code = MOP_M_UNIT::get();
 
         return view('pages.trainer.trainhoursindex', [
@@ -254,10 +256,10 @@ class TrainerController extends Controller
             MOP_T_HMTRAIN_HOURS::insert($data);
 
             MOP_T_HMTRAIN_HOURS::where('jde_no', $request->input('JDE'),)
-            ->where('training_type', $request->input('train_type'))
-            ->where('unit_class', $request->input('unit_class'))
-            ->where('batch', $request->input('batch'))
-            ->update(['progres' => $request->input('progress')]);
+                ->where('training_type', $request->input('train_type'))
+                ->where('unit_class', $request->input('unit_class'))
+                ->where('batch', $request->input('batch'))
+                ->update(['progres' => $request->input('progress')]);
 
             // Redirect or return a success message
             return redirect()->route('HMTrainIndex')->with('success', 'Train Hours record created successfully.');
@@ -287,10 +289,10 @@ class TrainerController extends Controller
                 ->sum('total_hm');
 
             MOP_T_HMTRAIN_HOURS::where('jde_no', $jde)
-            ->where('training_type', $trainType)
-            ->where('unit_class', $unitClass)
-            ->where('batch', $batch)
-            ->update(['progres' => $newProgres]);
+                ->where('training_type', $trainType)
+                ->where('unit_class', $unitClass)
+                ->where('batch', $batch)
+                ->update(['progres' => $newProgres]);
 
             return response()->json([
                 'success' => true,
@@ -434,8 +436,4 @@ class TrainerController extends Controller
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
-
-
-
-
 }

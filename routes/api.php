@@ -34,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dayActivities/createDailyAct', [ApiMobileController::class, 'apiDayActCreate']);
     Route::put('/dayActivities/{id}/update', [ApiMobileController::class, 'apiDayActUpdate']);
     Route::delete('/dayActivities/{id}/delete', [ApiMobileController::class, 'apiDayActDelete']);
+    Route::get('/trainHours/create', [ApiMobileController::class, 'apiHMTrainCreate']);
+    Route::post('/trainHours/store', [ApiMobileController::class, 'apiHMTrainStore']);
+    Route::put('/trainHours/{id}', [ApiMobileController::class, 'apiHMTrainUpdate']);
 
     // Tambahkan endpoint lain yang butuh login di sini
 });
@@ -63,9 +66,16 @@ Route::get('/trainhour-data', [TrainerController::class, 'HMTrainData'])->name('
 
 // Route API mobile
 Route::get('/getModelUnit', [ApiMobileController::class, 'apiModelUnit']);
+
 Route::get('/mentoring-data', [ApiMobileController::class, 'MentoringData'])->name('MentoringData');
 Route::get('/mentoring/{id}/edit', [ApiMobileController::class, 'apiMentoringEdit']);
 Route::get('/mentoring/createData', [ApiMobileController::class, 'apiMentoringCreate']);
+
 Route::get('/dayActivities', [ApiMobileController::class, 'apiDayActIndex']);
 Route::get('/dayActivities/{id}/edit', [ApiMobileController::class, 'apiDayActEdit']);
+
+Route::get('/trainHours', [ApiMobileController::class, 'apiHMTrainIndex']);
+Route::get('/trainHours/{id}', [ApiMobileController::class, 'apiHMTrainShow']);
+
+
 // });

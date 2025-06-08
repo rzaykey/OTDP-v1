@@ -13,6 +13,7 @@ use App\Models\MOP_T_TRAINER_DAILY_ACTIVITY;
 use App\Models\MOP_T_HMTRAIN_HOURS;
 use App\Models\MOP_M_MENTORING_INDICATOR;
 use App\Models\MOP_M_UNIT;
+use App\Models\MOP_M_KPI;
 use App\Models\MOP_M_TYPE_UNIT;
 use App\Models\MOP_M_ACTIVITY;
 use App\Models\MOP_M_MODEL_UNIT;
@@ -671,5 +672,200 @@ class ApiMobileController extends Controller
                 'message' => 'Failed to delete the record.',
             ], 500);
         }
+    }
+
+    public function apiHMTrainIndex()
+    {
+
+        $data = DB::connection('MSADMIN')
+            ->table('MOP_T_HMTRAIN_HOURS as a')
+            ->leftJoin('MOP_M_MODEL_UNIT as b', 'a.UNIT_CLASS', '=', 'b.ID')
+            ->leftJoin('MOP_M_UNIT as c', 'a.CODE', '=', 'c.ID')
+            // ambil unit_class = model dari b, code = no_unit dari c
+            ->select([
+                'a.ID as id',
+                'a.JDE_NO as jde_no',
+                'a.EMPLOYEE_NAME as employee_name',
+                'a.POSITION as position',
+                'a.TRAINING_TYPE as training_type',
+                'b.MODEL as unit_class',    // Model dari m_model
+                'a.UNIT_TYPE as unit_type',
+                'c.NO_UNIT as code',        // no_unit dari m_unit
+                'a.BATCH as batch',
+                'a.PLAN_TOTAL_HM as plan_total_hm',
+                'a.HM_START as hm_start',
+                'a.HM_END as hm_end',
+                'a.TOTAL_HM as total_hm',
+                'a.PROGRES as progres',
+                'a.SITE as site',
+                'a.CREATED_AT as created_at',
+                'a.CREATED_BY as created_by',
+                'a.UPDATED_AT as updated_at',
+                'a.UPDATED_BY as updated_by',
+                'a.DATE_ACTIVITY as date_activity'
+            ])
+            ->get();
+
+        // Return sebagai JSON response
+        return response()->json([
+            'status' => true,
+            'message' => 'Success get HM Train data',
+            'data' => [
+                'data' => $data,
+            ]
+        ]);
+    }
+
+    public function apiHMTrainCreate()
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized',
+                'data' => null
+            ], 401);
+        }
+        $employeeAuth = PROINT_EMPLOYEE::where('EmployeeId', Auth::user()->username)->first();
+        $kpi = MOP_M_KPI::get();
+        $typeUnit = MOP_M_TYPE_UNIT::select('class')->distinct()->orderby('class')->get();
+        $classUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
+            ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
+            ->select('a.id', 'a.model', 'b.type', 'b.class')
+            ->get();
+        $codeUnit = MOP_M_UNIT::get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Get employee data for form',
+            'data' => [
+                'employeeAuth' => $employeeAuth,
+                'typeUnit' => $typeUnit,
+                'classUnit' => $classUnit,
+                'kpi' => $kpi,
+                'codeUnit' => $codeUnit,
+            ]
+        ]);
+    }
+
+    public function apiHMTrainStore(Request $request)
+    {
+        try {
+            $maxId = MOP_T_HMTRAIN_HOURS::max('ID');
+            $newId = ($maxId ?? 0) + 1;
+
+            $data = [
+                'ID' => $newId,
+                'JDE_NO' => $request->input('jde_no'),
+                'EMPLOYEE_NAME' => $request->input('employee_name'),
+                'POSITION' => $request->input('position'),
+                'SITE' => $request->input('site'),
+                'DATE_ACTIVITY' => $request->input('date_activity'),
+                'TRAINING_TYPE' => $request->input('training_type'),
+                'UNIT_CLASS' => $request->input('unit_class'),
+                'UNIT_TYPE' => $request->input('unit_type'),
+                'CODE' => $request->input('code'),
+                'BATCH' => $request->input('batch'),
+                'HM_START' => $request->input('hm_start'),
+                'HM_END' => $request->input('hm_end'),
+                'TOTAL_HM' => $request->input('total_hm'),
+                'PLAN_TOTAL_HM' => $request->input('plan_total_hm'),
+                'PROGRES' => $request->input('progres'),
+                'CREATED_BY' => Auth::user()->username,
+            ];
+
+
+            MOP_T_HMTRAIN_HOURS::insert($data);
+
+            // Update progress (jika diperlukan)
+            MOP_T_HMTRAIN_HOURS::where('JDE_NO', $request->input('JDE'))
+                ->where('TRAINING_TYPE', $request->input('train_type'))
+                ->where('UNIT_CLASS', $request->input('unit_class'))
+                ->where('BATCH', $request->input('batch'))
+                ->update(['PROGRES' => $request->input('progress')]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Train Hours record created successfully.',
+                'data' => [
+                    'id' => $newId
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in apiHMTrainStore: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menyimpan data, harap menghubungi admin atau IT',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // GET /api/trainHours/{id}
+    public function apiHMTrainShow($id)
+    {
+        $data = MOP_T_HMTRAIN_HOURS::find($id);
+
+        if (!$data) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data not found'
+            ], 404);
+        }
+
+        // Ambil semua codeUnit untuk dropdown
+        $codeUnit = MOP_M_UNIT::get();
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+            'codeUnit' => $codeUnit, // untuk dropdown di form edit
+        ]);
+    }
+
+
+    // PUT /api/trainHours/{id}
+    public function apiHMTrainUpdate(Request $request, $id)
+    {
+        $data = MOP_T_HMTRAIN_HOURS::find($id);
+
+        if (!$data) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data not found'
+            ], 404);
+        }
+
+        $data->update([
+            'JDE_NO' => $request->input('jde_no'),
+            'EMPLOYEE_NAME' => $request->input('employee_name'),
+            'SITE' => $request->input('site'),
+            'DATE_ACTIVITY' => $request->input('date_activity'),
+            'POSITION' => $request->input('position'),
+            'TRAINING_TYPE' => $request->input('training_type'),
+            'UNIT_CLASS' => $request->input('unit_class'),
+            'UNIT_TYPE' => $request->input('unit_type'),
+            'BATCH' => $request->input('batch'),
+            'CODE' => $request->input('code'),
+            'HM_START' => $request->input('hm_start'),
+            'HM_END' => $request->input('hm_end'),
+            'TOTAL_HM' => $request->input('total_hm'),
+            'PLAN_TOTAL_HM' => $request->input('plan_total_hm'),
+            'PROGRES' => $request->input('progres'),
+            'UPDATED_BY' => Auth::user()->username,
+        ]);
+
+        // Optional: Update progres, jika masih dibutuhkan (logic lama-mu)
+        MOP_T_HMTRAIN_HOURS::where('JDE_NO', $request->input('jde_no'))
+            ->where('TRAINING_TYPE', $request->input('training_type'))
+            ->where('UNIT_CLASS', $request->input('unit_class'))
+            ->where('BATCH', $request->input('batch'))
+            ->update(['PROGRES' => $request->input('progres')]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Train Hours record updated successfully.',
+            'data' => [
+                'id' => $id
+            ]
+        ]);
     }
 }
