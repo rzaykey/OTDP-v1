@@ -62,7 +62,7 @@
             <div class="align-items-center text-end mb-2">
                 <br />
                 <div class="d-flex flex-wrap justify-content-end gap-2 mb-2">
-                    {{-- <a class="btn btn-primary" href="{{ route('MOPCreate') }}">Tambah</a> --}}
+                    <a class="btn btn-primary" href="{{ route('MOPCreate') }}">Tambah</a>
                     <button type="button" class="btn btn-success" data-bs-toggle="modal"
                         data-bs-target="#importModal">Imports</button>
                     <button type="button" class="btn btn-secondary" data-bs-toggle="modal"

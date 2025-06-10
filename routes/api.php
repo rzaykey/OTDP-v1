@@ -77,5 +77,9 @@ Route::get('/dayActivities/{id}/edit', [ApiMobileController::class, 'apiDayActEd
 Route::get('/trainHours', [ApiMobileController::class, 'apiHMTrainIndex']);
 Route::get('/trainHours/{id}', [ApiMobileController::class, 'apiHMTrainShow']);
 
+Route::get('/dashboard', [ApiMobileController::class, 'summary']);
+Route::get('/mopData', [ApiMobileController::class, 'apiMopData']);
+
+
 
 // });

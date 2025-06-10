@@ -15,7 +15,7 @@ use App\Models\MOP_M_MENTORING_INDICATOR;
 use App\Models\MOP_M_UNIT;
 use App\Models\MOP_M_KPI;
 use App\Models\MOP_M_TYPE_UNIT;
-use App\Models\MOP_M_ACTIVITY;
+use App\Models\MOP_T_MOP_HEADER;
 use App\Models\MOP_M_MODEL_UNIT;
 use App\Models\MASTER_SITE;
 use App\Models\PROINT_EMPLOYEE;
@@ -26,6 +26,7 @@ use App\Exports\DayActHeaderExport;
 use App\Imports\DayActImport;
 use App\Exports\HMTrainExport;
 use App\Imports\HMTrainImport;
+use Carbon\Carbon;
 
 class ApiMobileController extends Controller
 {
@@ -867,5 +868,42 @@ class ApiMobileController extends Controller
                 'id' => $id
             ]
         ]);
+    }
+
+    public function summary()
+    {
+        $today = Carbon::today()->toDateString(); // format: 'YYYY-MM-DD'
+        $mentoringToday = MOP_T_MENTORING_HEADER::whereDate('date_mentoring', $today)->count();
+        $dailyToday = MOP_T_TRAINER_DAILY_ACTIVITY::whereDate('date_activity', $today)->count();
+        $trainHoursToday = MOP_T_HMTRAIN_HOURS::whereDate('date_activity', $today)->count();
+        $unitTotal = MOP_M_UNIT::get()->count();
+        $typeTotal = MOP_M_TYPE_UNIT::get()->count();
+        $modelTotal = MOP_M_MODEL_UNIT::get()->count();
+        $siteTotal = MASTER_SITE::get()->count(); // Jumlah jenis class unik (distinct)
+        $classTotal = MOP_M_TYPE_UNIT::select('class')->distinct()->count('class');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mentoringToday' => $mentoringToday,
+                'dailyToday' => $dailyToday,
+                'trainHoursToday' => $trainHoursToday,
+                'unitTotal' => $unitTotal,
+                'typeTotal' => $typeTotal,
+                'modelTotal' => $modelTotal,
+                'siteTotal' => $siteTotal,
+                'classTotal' => $classTotal,
+            ]
+        ]);
+    }
+
+    public function apiMopData()
+    {
+        $mopheader = MOP_T_MOP_HEADER::orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->orderBy('jde_no', 'asc')
+            ->get();
+
+        return response()->json(['data' => $mopheader]);
     }
 }
