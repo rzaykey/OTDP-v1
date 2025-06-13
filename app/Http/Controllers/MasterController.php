@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\PROINT_EMPLOYEE;
 use App\Models\MOP_M_ACTIVITY;
+use App\Models\MOP_M_KPI;
 use App\Models\MOP_M_TYPE_UNIT;
 use App\Models\MOP_M_MODEL_UNIT;
 use App\Models\MOP_M_UNIT;
@@ -239,27 +240,23 @@ class MasterController extends Controller
         }
     }
 
-    public function getKPI(Request $request)
+    public function getKPI()
     {
         try {
-            // return $request;
-            $site = $request->input('site');
-            $role = $request->input('role');
+            // Ambil semua data KPI tanpa filter
+            $data = MOP_M_KPI::all();
 
-            Log::info('Role : ' . Auth::user());
-            if ($role !== 'Full') {
-                $query = MOP_M_ACTIVITY::select('kpi')
-                    ->where('site', $site)
-                    ->distinct()->orderBy('kpi')
-                    ->get();
-            } else {
-                $query = MOP_M_ACTIVITY::select('kpi')->distinct()->orderBy('kpi')->get();
-            }
-
-            return response()->json($query);
+            return response()->json([
+                'success' => true,
+                'data'    => $data
+            ]);
         } catch (\Exception $e) {
-            Log::error('Error in getKPI API: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            // Error handling
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada server.',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -268,20 +265,30 @@ class MasterController extends Controller
         try {
             $site = $request->input('site');
             $role = $request->input('role');
-            $kpi = $request->input('kpi');
-            log::info('request ' . $request . ' role :' . $role . ' site: ' . $site . ' kpi: ' . $kpi);
-            if ($role !== 'Full') {
-                $query = MOP_M_ACTIVITY::where('kpi', $kpi)->where('site', $site)->get(); // FULL sees all
+            $kpi = $request->input('kpi'); // HARUS id, bukan string
+
+            \Log::info('request: ' . json_encode($request->all()) . ' | role: ' . $role . ' | site: ' . $site . ' | KPI: ' . $kpi);
+
+            if ($role === 'Full') {
+                // Full boleh lihat semua activity di KPI tertentu
+                $query = \App\Models\MOP_M_ACTIVITY::where('KPI', $kpi)->get();
             } else {
-                $query = MOP_M_ACTIVITY::where('kpi', $kpi)->get(); // others filtered by KPI
+                // Selain full, filter juga by site (pastikan kolom di DB benar)
+                $query = \App\Models\MOP_M_ACTIVITY::where('KPI', $kpi)
+                    ->where('site', $site)
+                    ->get();
             }
 
-            return response()->json($query);
+            return response()->json([
+                'success' => true,
+                'data' => $query
+            ]);
         } catch (\Exception $e) {
-            Log::error('Error in Activity API: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error in Activity API: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+
 
     public function getMasterClassUnit(Request $request)
     {

@@ -17,6 +17,7 @@ use App\Models\MOP_M_KPI;
 use App\Models\MOP_M_TYPE_UNIT;
 use App\Models\MOP_T_MOP_HEADER;
 use App\Models\MOP_M_MODEL_UNIT;
+// use App\Models\MOP_M_CLASS_UNIT;
 use App\Models\MASTER_SITE;
 use App\Models\PROINT_EMPLOYEE;
 use Illuminate\Support\Facades\Validator;
@@ -55,7 +56,10 @@ class ApiMobileController extends Controller
     public function MentoringData(Request $request)
     {
 
-        $mentoring = MOP_T_MENTORING_HEADER::get();
+        // $mentoring = MOP_T_MENTORING_HEADER::get();
+        $mentoring = DB::connection('MSADMIN')->table('MOP_T_MENTORING_HEADER as a')
+            ->join('MOP_M_CLASS_UNIT as b', 'a.UNIT_TYPE', '=', 'b.ID')
+            ->select('a.*', 'b.class as class_name')->get();
 
         return response()->json(['data' => $mentoring]);
     }
@@ -231,16 +235,64 @@ class ApiMobileController extends Controller
     public function apiMentoringEdit($id)
     {
         try {
-            $header = MOP_T_MENTORING_HEADER::findOrFail($id);
+            $header = DB::connection('MSADMIN')->table('MOP_T_MENTORING_HEADER as a')
+                ->join('MOP_M_UNIT as b', 'a.UNIT_NUMBER', '=', 'b.ID')
+                ->select([
+                    // Dari MOP_T_MENTORING_HEADER (alias a)
+                    'a.ID as HEADER_ID',
+                    'a.TYPE_MENTORING',
+                    'a.TRAINER_JDE',
+                    'a.TRAINER_NAME',
+                    'a.OPERATOR_JDE',
+                    'a.OPERATOR_NAME',
+                    'a.SITE as HEADER_SITE',
+                    'a.AREA',
+                    'a.UNIT_TYPE',
+                    'a.UNIT_MODEL',
+                    'a.UNIT_NUMBER',
+                    'a.DATE_MENTORING',
+                    'a.START_TIME',
+                    'a.END_TIME',
+                    'a.AVERAGE_YSCORE_OBSERVATION',
+                    'a.AVERAGE_POINT_OBSERVATION',
+                    'a.AVERAGE_YSCORE_MENTORING',
+                    'a.AVERAGE_POINT_MENTORING',
+                    'a.SCORE2_PRODUCTIVITY',
+                    'a.SCORE2_SAFETY_AWARNESS',
+                    'a.SCORE2_MACHINE_HEALTH',
+                    'a.SCORE2_FULL_EFFICIENT',
+                    'a.CREATED_AT as HEADER_CREATED_AT',
+                    'a.CREATED_BY as HEADER_CREATED_BY',
+                    'a.UPDATED_AT as HEADER_UPDATED_AT',
+                    'a.UPDATED_BY as HEADER_UPDATED_BY',
 
-            $siteList = MASTER_SITE::all(); // ✅ ambil semua site
+                    // Dari MOP_M_UNIT (alias b)
+                    'b.ID as UNIT_ID',
+                    'b.NO_UNIT',
+                    'b.FID_TYPE',
+                    'b.FID_MODEL',
+                    'b.MERK',
+                    'b.CATEGORY_MENTORING',
+                    'b.SITE as UNIT_SITE',
+                ])
+                ->where('a.ID', $id)
+                ->first();
+
+
+            if (!$header) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data not found'
+                ], 404);
+            }
+
+            $siteList = MASTER_SITE::all();
             $penilaian = MOP_T_MENTORING_PENILAIAN::where('fid_mentoring', $id)->get();
             $details = MOP_T_MENTORING_DETAIL::where('fid_mentoring', $id)->get();
 
-            $type = strtoupper($header->type_mentoring);
             $data = DB::connection('MSADMIN')
                 ->table('MOP_M_MENTORING_INDICATOR')
-                ->where('TYPE', $type)
+                ->where('TYPE', $header->type_mentoring)
                 ->get()
                 ->groupBy('indicator_type');
 
@@ -254,7 +306,17 @@ class ApiMobileController extends Controller
 
             $modelUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
                 ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
-                ->select('a.id', 'a.model', 'b.type', 'b.class')->get();
+                ->leftJoin('MOP_M_CLASS_UNIT as c', 'b.CLASS', '=', 'c.ID')
+                ->select(
+                    'a.id as model_id',
+                    'a.model',
+                    'b.id as type_id',
+                    'b.type as type_name',
+                    'c.id as class_id',
+                    'c.class as class'
+                )
+                ->get();
+
             $unit = MOP_M_UNIT::get();
 
             return response()->json([
@@ -277,6 +339,7 @@ class ApiMobileController extends Controller
             ], 500);
         }
     }
+
 
     public function apiMentoringUpdate(Request $request, $id)
     {
@@ -308,7 +371,8 @@ class ApiMobileController extends Controller
                 'UNIT_TYPE' => $request->input('unit_type'),
                 'UNIT_MODEL' => $request->input('unit_model'),
                 'UNIT_NUMBER' => $request->input('unit_number'),
-                'SITE' => $request->input('site'),
+                'SITE' => $request->input('header_site'),
+                'AREA' => $request->input('area'),
                 'AVERAGE_YSCORE_OBSERVATION' => $request->input('average_yscore_observation'),
                 'AVERAGE_POINT_OBSERVATION' => $request->input('average_point_observation'),
                 'AVERAGE_YSCORE_MENTORING' => $request->input('average_yscore_mentoring'),
@@ -480,6 +544,8 @@ class ApiMobileController extends Controller
             $query = DB::connection('MSADMIN')->table('MOP_T_TRAINER_DAILY_ACTIVITY as d')
                 ->leftJoin('MOP_M_MODEL_UNIT as u', 'd.UNIT_DETAIL', '=', 'u.ID')
                 ->leftJoin('MOP_M_ACTIVITY as a', 'd.ACTIVITY', '=', 'a.ID')
+                // Tambahkan join ke tabel KPI
+                ->leftJoin('MOP_M_KPI as kpi', 'd.KPI_TYPE', '=', 'kpi.ID')
                 ->select(
                     'd.ID',
                     'd.JDE_NO',
@@ -487,6 +553,7 @@ class ApiMobileController extends Controller
                     'd.SITE',
                     'd.DATE_ACTIVITY',
                     'd.KPI_TYPE',
+                    'kpi.KPI as KPI_NAME',      // <-- Ini nama KPI
                     'a.ACTIVITY as ACTIVITY_NAME',
                     'u.MODEL as UNIT_MODEL',
                     'd.TOTAL_PARTICIPANT',
@@ -550,7 +617,7 @@ class ApiMobileController extends Controller
                 'employee_name' => 'required|string',
                 'site' => 'required|string',
                 'date_activity' => 'required|date',
-                'kpi_type' => 'required|string',
+                'kpi_type' => 'required',
                 'activity' => 'required',
                 'unit_detail' => 'required',
                 'total_participant' => 'required|string',
@@ -677,21 +744,21 @@ class ApiMobileController extends Controller
 
     public function apiHMTrainIndex()
     {
-
         $data = DB::connection('MSADMIN')
             ->table('MOP_T_HMTRAIN_HOURS as a')
             ->leftJoin('MOP_M_MODEL_UNIT as b', 'a.UNIT_CLASS', '=', 'b.ID')
             ->leftJoin('MOP_M_UNIT as c', 'a.CODE', '=', 'c.ID')
-            // ambil unit_class = model dari b, code = no_unit dari c
+            ->leftJoin('MOP_M_CLASS_UNIT as d', 'a.UNIT_TYPE', '=', 'd.ID')
+            ->leftJoin('MOP_M_KPI as e', 'a.TRAINING_TYPE', '=', 'e.ID')
             ->select([
                 'a.ID as id',
                 'a.JDE_NO as jde_no',
                 'a.EMPLOYEE_NAME as employee_name',
                 'a.POSITION as position',
-                'a.TRAINING_TYPE as training_type',
-                'b.MODEL as unit_class',    // Model dari m_model
-                'a.UNIT_TYPE as unit_type',
-                'c.NO_UNIT as code',        // no_unit dari m_unit
+                'e.KPI as training_type',
+                'b.MODEL as unit_class',
+                'd.CLASS as unit_type',
+                'c.NO_UNIT as code',
                 'a.BATCH as batch',
                 'a.PLAN_TOTAL_HM as plan_total_hm',
                 'a.HM_START as hm_start',
@@ -707,15 +774,13 @@ class ApiMobileController extends Controller
             ])
             ->get();
 
-        // Return sebagai JSON response
         return response()->json([
             'status' => true,
             'message' => 'Success get HM Train data',
-            'data' => [
-                'data' => $data,
-            ]
+            'data' => $data    // <-- KONSISTEN, array langsung
         ]);
     }
+
 
     public function apiHMTrainCreate()
     {
@@ -728,7 +793,8 @@ class ApiMobileController extends Controller
         }
         $employeeAuth = PROINT_EMPLOYEE::where('EmployeeId', Auth::user()->username)->first();
         $kpi = MOP_M_KPI::get();
-        $typeUnit = MOP_M_TYPE_UNIT::select('class')->distinct()->orderby('class')->get();
+        $typeUnit = DB::connection('MSADMIN')->table('MOP_M_CLASS_UNIT')->get();
+
         $classUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
             ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
             ->select('a.id', 'a.model', 'b.type', 'b.class')
@@ -813,11 +879,18 @@ class ApiMobileController extends Controller
             ], 404);
         }
 
-        // Ambil semua codeUnit untuk dropdown
+        $kpi = MOP_M_KPI::get();
+        $classUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
+            ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
+            ->select('a.id', 'a.model', 'b.type', 'b.class')
+            ->get();
+        $typeUnit = DB::connection('MSADMIN')->table('MOP_M_CLASS_UNIT')->get();
         $codeUnit = MOP_M_UNIT::get();
         return response()->json([
             'status' => true,
             'data' => $data,
+            'typeUnit' => $typeUnit, // untuk dropdown di form edit
+            'classUnit' => $classUnit, // untuk dropdown di form edit
             'codeUnit' => $codeUnit, // untuk dropdown di form edit
         ]);
     }
