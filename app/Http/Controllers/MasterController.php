@@ -224,6 +224,47 @@ class MasterController extends Controller
         }
     }
 
+    public function EmployeeOperatorAll()
+    {
+        try {
+            $startTime = microtime(true);
+
+            $query = PROINT_EMPLOYEE::where('PayStatus', 'ACTIVE')
+                ->whereIn('LocationGroupName', ['ACP', 'BCP', 'KCP', 'WKP'])
+                ->where('OrgGroupName', 'Operation')
+                ->whereIn('joblevelgroup', ['Operator', 'Junior Staff', 'Supervisor'])
+                ->where('OrgGroupName', 'Operation');
+
+            $employees = $query->select(
+                'employeeId',
+                'EmployeeName',
+                'LocationGroupName',
+                'DivisionName',
+                'OrgGroupName',
+                'PositionName'
+            )->get();
+
+            $endTime = microtime(true);
+            Log::info('EmployeeOperator query time: ' . ($endTime - $startTime) . ' seconds');
+
+            return response()->json($employees);
+        } catch (\Exception $e) {
+            Log::error('Error in EmployeeOperator: ' . $e->getMessage());
+            return response()->json(['error' => $e], 500);
+        }
+    }
+
+    public function ModelUnitAll()
+    {
+        try {
+            $data = MOP_M_MODEL_UNIT::orderby('id', 'asc')->get();
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('Error in ModelUnit: ' . $e->getMessage());
+            return response()->json(['error' => $e], 500);
+        }
+    }
+
     public function getEmployeeAuth()
     {
         try {
@@ -279,6 +320,21 @@ class MasterController extends Controller
                     ->get();
             }
 
+            return response()->json([
+                'success' => true,
+                'data' => $query
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in Activity API: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getActivityAll(Request $request)
+    {
+        try {
+            // Selain full, filter juga by site (pastikan kolom di DB benar)
+            $query = \App\Models\MOP_M_ACTIVITY::get();
             return response()->json([
                 'success' => true,
                 'data' => $query

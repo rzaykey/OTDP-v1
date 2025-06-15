@@ -52,6 +52,7 @@ Route::get('/getMasterUnit', [MasterController::class, 'getMasterUnit'])->name('
 
 Route::post('/getTotalHM', [TrainerController::class, 'getTotalHM'])->name('trainer.totalHM');
 Route::get('/getActivity', [MasterController::class, 'getActivity'])->name('activity.master');
+Route::get('/getActivity/all', [MasterController::class, 'getActivityAll']);
 Route::get('/getKPI', [MasterController::class, 'getKPI'])->name('activity.kpi');
 
 Route::get('/mop-data', [MOPController::class, 'MOPData'])->name('MOPData');
@@ -72,14 +73,23 @@ Route::get('/mentoring/{id}/edit', [ApiMobileController::class, 'apiMentoringEdi
 Route::get('/mentoring/createData', [ApiMobileController::class, 'apiMentoringCreate']);
 
 Route::get('/dayActivities', [ApiMobileController::class, 'apiDayActIndex']);
+Route::get('/apiDayActAll', [ApiMobileController::class, 'apiDayActAll']);
 Route::get('/dayActivities/{id}/edit', [ApiMobileController::class, 'apiDayActEdit']);
 
+Route::get('/apiDayActAll/summaryDayAct', [ApiMobileController::class, 'summaryDayAct']);
+Route::get('/mentoring/summaryMentoring', [ApiMobileController::class, 'summaryMentoring']);
+Route::get('/trainHours/summary', [ApiMobileController::class, 'summaryTrainHours']);
+Route::get('/mopData/summary', [ApiMobileController::class, 'summaryMop']);
+
 Route::get('/trainHours', [ApiMobileController::class, 'apiHMTrainIndex']);
+Route::get('/trainHoursCache', [ApiMobileController::class, 'trainHoursCache']);
 Route::get('/trainHours/{id}', [ApiMobileController::class, 'apiHMTrainShow']);
 
 Route::get('/dashboard', [ApiMobileController::class, 'summary']);
 Route::get('/mopData', [ApiMobileController::class, 'apiMopData']);
 
-
+Route::get('/getEmployeeOperatorAll', [MasterController::class, 'EmployeeOperatorAll'])->name('EmployeeOperatorAll');;
+Route::get('/apiDayActAll', [ApiMobileController::class, 'apiDayActAll']);
+Route::get('/getSite', [ApiMobileController::class, 'masterSite']);
 
 // });

@@ -654,6 +654,24 @@ class ApiMobileController extends Controller
             ], 500);
         }
     }
+
+    public function apiDayActAll()
+
+    {
+        try {
+
+            $dayact = MOP_T_TRAINER_DAILY_ACTIVITY::get();;
+
+            if (!$dayact) {
+                return response()->json(['data' => null], 404);
+            }
+
+            return response()->json(['data' => $dayact]);
+        } catch (\Exception $e) {
+            \Log::error('Error in apiDayActIndex: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
     public function apiDayActEdit($id)
 
     {
@@ -806,6 +824,28 @@ class ApiMobileController extends Controller
             'message' => 'Get employee data for form',
             'data' => [
                 'employeeAuth' => $employeeAuth,
+                'typeUnit' => $typeUnit,
+                'classUnit' => $classUnit,
+                'kpi' => $kpi,
+                'codeUnit' => $codeUnit,
+            ]
+        ]);
+    }
+
+    public function trainHoursCache()
+    {
+        $kpi = MOP_M_KPI::get();
+        $typeUnit = DB::connection('MSADMIN')->table('MOP_M_CLASS_UNIT')->get();
+
+        $classUnit = DB::connection('MSADMIN')->table('MOP_M_MODEL_UNIT as a')
+            ->leftJoin('MOP_M_TYPE_UNIT as b', 'a.FID_TYPE', '=', 'b.ID')
+            ->select('a.id', 'a.model', 'b.type', 'b.class')
+            ->get();
+        $codeUnit = MOP_M_UNIT::get();
+
+        return response()->json([
+            'status' => true,
+            'data' => [
                 'typeUnit' => $typeUnit,
                 'classUnit' => $classUnit,
                 'kpi' => $kpi,
@@ -978,5 +1018,63 @@ class ApiMobileController extends Controller
             ->get();
 
         return response()->json(['data' => $mopheader]);
+    }
+
+    public function masterSite()
+    {
+
+        $data = MASTER_SITE::all();
+
+        return response()->json(['data' => $data]);
+    }
+    public function summaryDayAct()
+    {
+        $result = MOP_T_TRAINER_DAILY_ACTIVITY::selectRaw('COUNT(*) as total_count, MAX(id) as max_id, MAX(updated_at) as last_update')
+            ->first();
+
+        // Fallback jika tabel kosong (pastikan tetap return sesuatu)
+        return response()->json([
+            'total_count' => (int) ($result->total_count ?? 0),
+            'max_id' => (int) ($result->max_id ?? 0),
+            'last_update' => $result->last_update ?? null,
+        ]);
+    }
+
+    public function summaryMentoring()
+    {
+        $result = MOP_T_MENTORING_HEADER::selectRaw('COUNT(*) as total_count, MAX(id) as max_id, MAX(updated_at) as last_update')
+            ->first();
+
+        // Fallback jika tabel kosong (pastikan tetap return sesuatu)
+        return response()->json([
+            'total_count' => (int) ($result->total_count ?? 0),
+            'max_id' => (int) ($result->max_id ?? 0),
+            'last_update' => $result->last_update ?? null,
+        ]);
+    }
+    public function summaryTrainHours()
+    {
+        $result = MOP_T_HMTRAIN_HOURS::selectRaw('COUNT(*) as total_count, MAX(id) as max_id, MAX(updated_at) as last_update')
+            ->first();
+
+        // Fallback jika tabel kosong (pastikan tetap return sesuatu)
+        return response()->json([
+            'total_count' => (int) ($result->total_count ?? 0),
+            'max_id' => (int) ($result->max_id ?? 0),
+            'last_update' => $result->last_update ?? null,
+        ]);
+    }
+
+    public function summaryMop()
+    {
+        $result = MOP_T_MOP_HEADER::selectRaw('COUNT(*) as total_count, MAX(id) as max_id, MAX(updated_at) as last_update')
+            ->first();
+
+        // Fallback jika tabel kosong (pastikan tetap return sesuatu)
+        return response()->json([
+            'total_count' => (int) ($result->total_count ?? 0),
+            'max_id' => (int) ($result->max_id ?? 0),
+            'last_update' => $result->last_update ?? null,
+        ]);
     }
 }
